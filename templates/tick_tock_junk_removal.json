@@ -1,0 +1,276 @@
+{
+  "template_name": "Tick-Tock Junk Removal Invoice",
+  "template_version": "1.0",
+  "vendor": {
+    "name": "Tick-Tock Junk Removal",
+    "phone": "(206) 504-9188",
+    "address": "12345 Lake City Way NE, #379",
+    "city": "Seattle",
+    "state": "WA",
+    "zip": "98125",
+    "country": "United States"
+  },
+  "invoice_structure": {
+    "header": {
+      "required_fields": [
+        "vendor_logo",
+        "vendor_name",
+        "vendor_address",
+        "vendor_phone"
+      ]
+    },
+    "billing_info": {
+      "required_fields": [
+        {
+          "field": "billed_to",
+          "type": "string",
+          "pattern": "^.+$",
+          "description": "Customer/Property name"
+        },
+        {
+          "field": "invoices_to_email",
+          "type": "email",
+          "pattern": "^[\\w.-]+@[\\w.-]+\\.\\w+$",
+          "description": "Email address for invoices"
+        },
+        {
+          "field": "billing_address",
+          "type": "string",
+          "description": "Street address, city, state, zip"
+        }
+      ]
+    },
+    "invoice_details": {
+      "required_fields": [
+        {
+          "field": "date_of_issue",
+          "type": "date",
+          "format": "MM/DD/YYYY",
+          "description": "Invoice issue date"
+        },
+        {
+          "field": "due_date",
+          "type": "date",
+          "format": "MM/DD/YYYY",
+          "description": "Payment due date"
+        },
+        {
+          "field": "invoice_number",
+          "type": "integer",
+          "min": 1,
+          "description": "Unique invoice number"
+        },
+        {
+          "field": "amount_due",
+          "type": "currency",
+          "currency": "USD",
+          "min": 0,
+          "description": "Total amount due"
+        }
+      ]
+    },
+    "line_items": {
+      "required": true,
+      "min_items": 1,
+      "item_structure": {
+        "required_fields": [
+          {
+            "field": "description",
+            "type": "string",
+            "description": "Service description"
+          },
+          {
+            "field": "rate",
+            "type": "currency",
+            "description": "Unit rate"
+          },
+          {
+            "field": "qty",
+            "type": "number",
+            "min": 1,
+            "description": "Quantity"
+          },
+          {
+            "field": "line_total",
+            "type": "currency",
+            "description": "Line item total"
+          }
+        ]
+      },
+      "common_service_types": [
+        {
+          "pattern": "Load.*cubic yards",
+          "description": "Junk removal load service"
+        },
+        {
+          "pattern": "Mattress.*Box Spring Fee",
+          "description": "Mattress/box spring disposal fee"
+        },
+        {
+          "pattern": "CFC Appliances",
+          "description": "CFC appliance disposal (refrigerators, etc.)"
+        },
+        {
+          "pattern": "Appliances/Metal Credit",
+          "description": "Credit for recyclable metal/appliances"
+        },
+        {
+          "pattern": "Solvent.*Cleaners.*Chemicals",
+          "description": "Hazardous materials disposal"
+        },
+        {
+          "pattern": "Cooking Oil",
+          "description": "Cooking oil disposal"
+        },
+        {
+          "pattern": "Aerosol Cans",
+          "description": "Aerosol can disposal"
+        },
+        {
+          "pattern": "Minimum Inside Pick-up",
+          "description": "Minimum charge for inside pickup"
+        }
+      ]
+    },
+    "discounts": {
+      "optional": true,
+      "discount_types": [
+        {
+          "name": "Greystar Discount",
+          "description": "Property management company discount"
+        },
+        {
+          "name": "Weekly / Monthly / Quarterly Discount",
+          "description": "Volume/frequency discount"
+        },
+        {
+          "name": "Additional Bulk Discount",
+          "description": "Bulk item discount"
+        },
+        {
+          "name": "Combined Load Discount",
+          "description": "Discount for combining loads"
+        }
+      ]
+    },
+    "totals": {
+      "required_fields": [
+        {
+          "field": "subtotal",
+          "type": "currency",
+          "description": "Sum of line items before tax"
+        },
+        {
+          "field": "srt_tax",
+          "type": "currency",
+          "tax_rate": 0.036,
+          "description": "State Refuse Tax (3.6%)"
+        },
+        {
+          "field": "total",
+          "type": "currency",
+          "description": "Total including tax"
+        },
+        {
+          "field": "amount_paid",
+          "type": "currency",
+          "description": "Amount already paid"
+        },
+        {
+          "field": "amount_due",
+          "type": "currency",
+          "description": "Final amount due"
+        }
+      ],
+      "validation_rules": [
+        {
+          "rule": "total_equals_subtotal_plus_tax",
+          "formula": "total = subtotal + srt_tax",
+          "tolerance": 0.02
+        },
+        {
+          "rule": "amount_due_equals_total_minus_paid",
+          "formula": "amount_due = total - amount_paid",
+          "tolerance": 0.01
+        },
+        {
+          "rule": "srt_calculation",
+          "formula": "srt_tax = subtotal * 0.036",
+          "tolerance": 0.05
+        }
+      ]
+    },
+    "additional_info": {
+      "optional_fields": [
+        {
+          "field": "pictures_link",
+          "type": "url",
+          "pattern": "^https://drive\\.google\\.com/.*$",
+          "description": "Google Drive link to job photos"
+        },
+        {
+          "field": "assigned_workers",
+          "type": "string",
+          "pattern": "^@\\w+.*$",
+          "description": "Worker assignments (e.g., @aam @plb)"
+        },
+        {
+          "field": "unit_number",
+          "type": "string",
+          "description": "Unit or apartment number"
+        },
+        {
+          "field": "location",
+          "type": "string",
+          "description": "Pickup location (Garage, Trash Room, etc.)"
+        },
+        {
+          "field": "job_id",
+          "type": "string",
+          "pattern": "^[a-z0-9]+$",
+          "description": "Internal job reference ID"
+        }
+      ]
+    },
+    "terms_section": {
+      "required": true,
+      "expected_content": [
+        "billing@ttjunk.com",
+        "service@ttjunk.com",
+        "(206) 504-9188",
+        "Payment is due within 30 days"
+      ]
+    }
+  },
+  "multi_invoice_support": {
+    "enabled": true,
+    "description": "PDF may contain multiple invoices",
+    "invoice_separator": "Each invoice starts with vendor logo/header",
+    "pages_per_invoice": "1-2 pages typically"
+  },
+  "validation_rules": {
+    "required_keywords": [
+      "Tick-Tock Junk Removal",
+      "Invoice Number",
+      "Date of Issue",
+      "Due Date",
+      "Amount Due",
+      "Billed To",
+      "Description",
+      "Rate",
+      "Qty",
+      "Line Total",
+      "Subtotal",
+      "SRT",
+      "Total"
+    ],
+    "date_validation": {
+      "due_date_after_issue_date": true,
+      "max_days_between": 60
+    },
+    "amount_validation": {
+      "line_total_equals_rate_times_qty": true,
+      "tolerance": 0.01
+    }
+  }
+}

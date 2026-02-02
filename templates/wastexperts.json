@@ -1,0 +1,63 @@
+{
+  "template_name": "WasteXperts Invoice Template",
+  "template_version": "1.0",
+  "vendor": {
+    "name": "WasteXperts",
+    "phone": "",
+    "address": "325 S Higley Road, Gilbert AZ 85296",
+    "email": "",
+    "website": ""
+  },
+  "invoice_structure": {
+    "header_fields": [
+      "invoice_number",
+      "date_of_issue",
+      "due_date",
+      "amount_due"
+    ],
+    "billing_fields": [
+      "billed_to",
+      "ship_to",
+      "purchase_order_no",
+      "customer_id"
+    ],
+    "line_item_fields": [
+      "description",
+      "unit_price",
+      "quantity",
+      "extended_price"
+    ],
+    "discount_types": [],
+    "total_fields": [
+      "subtotal",
+      "tax",
+      "total",
+      "amount_due"
+    ],
+    "tax_info": {
+      "tax_name": "Tax",
+      "tax_rate": 0.001
+    }
+  },
+  "validation_rules": {
+    "required_fields": [
+      "invoice_number",
+      "date_of_issue",
+      "due_date",
+      "amount_due",
+      "billed_to",
+      "subtotal",
+      "tax",
+      "total"
+    ],
+    "date_format": "M/D/YYYY",
+    "currency": "USD"
+  },
+  "extraction_hints": {
+    "invoice_number_pattern": "SI\\d{6,7}",
+    "date_pattern": "\\d{1,2}/\\d{1,2}/\\d{4}",
+    "amount_pattern": "\\$\\d+\\.\\d{2}",
+    "multi_invoice_support": true,
+    "pages_per_invoice": "1"
+  }
+}

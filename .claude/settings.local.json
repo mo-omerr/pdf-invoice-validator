@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install:*)",
+      "Bash(python pdf_validator.py:*)",
+      "Bash(pip3 install:*)",
+      "Bash(python3:*)",
+      "Bash(timeout 30 python3:*)",
+      "Bash(timeout 60 python3:*)",
+      "Bash(.venv/bin/pip:*)",
+      "Bash(tree:*)",
+      "Bash(ls:*)"
+    ]
+  }
+}

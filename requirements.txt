@@ -1,0 +1,9 @@
+anthropic
+PyMuPDF
+Pillow
+openpyxl
+python-dotenv
+fastapi
+uvicorn
+python-multipart
+jinja2

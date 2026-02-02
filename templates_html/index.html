@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Invoice Validator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .tab-btn {
+            padding: 10px 25px;
+            border: none;
+            background: #ecf0f1;
+            color: #7f8c8d;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover {
+            background: #bdc3c7;
+        }
+
+        .tab-btn.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .upload-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            border: 2px dashed #3498db;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #2980b9;
+            background: #f8fbff;
+        }
+
+        .upload-area.dragover {
+            border-color: #27ae60;
+            background: #f0fff4;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .upload-area h3 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .upload-area p {
+            color: #95a5a6;
+            font-size: 14px;
+        }
+
+        #fileInput, #batchFileInput {
+            display: none;
+        }
+
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+        }
+
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .stat-card h4 {
+            color: #7f8c8d;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .stat-card.success .value {
+            color: #27ae60;
+        }
+
+        .stat-card.warning .value {
+            color: #f39c12;
+        }
+
+        .stat-card.info .value {
+            color: #3498db;
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .chart-card h3 {
+            color: #2c3e50;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .invoices-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .invoices-section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .invoice-card {
+            border: 1px solid #ecf0f1;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .invoice-card.valid {
+            border-left: 4px solid #27ae60;
+        }
+
+        .invoice-card.invalid {
+            border-left: 4px solid #e74c3c;
+        }
+
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .invoice-header h4 {
+            color: #2c3e50;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge.valid {
+            background: #d5f5e3;
+            color: #27ae60;
+        }
+
+        .badge.invalid {
+            background: #fadbd8;
+            color: #e74c3c;
+        }
+
+        .badge.pending {
+            background: #fdebd0;
+            color: #d35400;
+        }
+
+        .badge.processing {
+            background: #d6eaf8;
+            color: #2980b9;
+        }
+
+        .invoice-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .detail-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .detail-item label {
+            display: block;
+            font-size: 11px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .detail-item span {
+            font-size: 14px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .line-items {
+            margin-top: 15px;
+        }
+
+        .line-items h5 {
+            color: #7f8c8d;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .line-items table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .line-items th, .line-items td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .line-items th {
+            background: #f8f9fa;
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+
+        .download-section {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
+        }
+
+        .btn-download {
+            background: #27ae60;
+        }
+
+        .btn-download:hover {
+            background: #219a52;
+        }
+
+        .error-message {
+            background: #fadbd8;
+            color: #e74c3c;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        .vendor-info {
+            background: #eaf2f8;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .vendor-info strong {
+            color: #2c3e50;
+        }
+
+        .new-template-badge {
+            background: #fdebd0;
+            color: #d35400;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        /* Batch Processing Styles */
+        .batch-info {
+            background: #e8f6f3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .batch-info h3 {
+            color: #1e8449;
+            margin-bottom: 10px;
+        }
+
+        .file-list {
+            margin: 15px 0;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .file-item .filename {
+            flex: 1;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .file-item .status {
+            font-size: 12px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-bar .fill {
+            height: 100%;
+            background: #3498db;
+            transition: width 0.3s ease;
+        }
+
+        .batch-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .batch-stat {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+
+        .batch-stat strong {
+            color: #2c3e50;
+        }
+
+        .selected-files {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .selected-files h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .selected-file {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+
+        .selected-file .remove-btn {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: #f5f7fa;
+            border-radius: 12px;
+            width: 95%;
+            max-width: 1100px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            background: white;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .modal-header h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #7f8c8d;
+            cursor: pointer;
+            padding: 0 5px;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: #e74c3c;
+        }
+
+        .modal-body {
+            padding: 25px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-body .dashboard {
+            background: transparent;
+        }
+
+        .modal-body .stat-card {
+            background: white;
+        }
+
+        .modal-charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .modal-chart-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .modal-chart-card h3 {
+            color: #2c3e50;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .btn-view {
+            background: #9b59b6;
+            padding: 5px 12px;
+            margin: 0;
+        }
+
+        .btn-view:hover {
+            background: #8e44ad;
+        }
+
+        .file-item .file-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .modal-download-section {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PDF Invoice Validator</h1>
+            <p>Upload PDF invoices to extract and validate data using AI</p>
+        </header>
+
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+            <button class="tab-btn active" data-tab="single">Single Upload</button>
+            <button class="tab-btn" data-tab="batch">Batch Upload</button>
+            <button class="tab-btn" data-tab="status">Batch Status</button>
+        </div>
+
+        <!-- Single Upload Tab -->
+        <div class="tab-content active" id="single-tab">
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📄</div>
+                    <h3>Drop PDF file here</h3>
+                    <p>or click to browse</p>
+                    <input type="file" id="fileInput" accept=".pdf">
+                    <button class="btn" id="uploadBtn">Select PDF File</button>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Processing PDF with AI... This may take a moment.</p>
+                </div>
+
+                <div class="error-message" id="errorMessage"></div>
+            </div>
+
+            <div class="results" id="results">
+                <div class="vendor-info" id="vendorInfo">
+                    <span>Vendor:</span>
+                    <strong id="vendorName"></strong>
+                    <span class="new-template-badge" id="newTemplateBadge" style="display: none;">New Template Created</span>
+                </div>
+
+                <div class="dashboard" id="dashboard">
+                    <div class="stat-card info">
+                        <h4>Invoices Found</h4>
+                        <div class="value" id="invoicesFound">0</div>
+                    </div>
+                    <div class="stat-card success">
+                        <h4>Total Amount</h4>
+                        <div class="value" id="totalAmount">$0.00</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Average Amount</h4>
+                        <div class="value" id="avgAmount">$0.00</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <h4>Highest Invoice</h4>
+                        <div class="value" id="highestAmount">$0.00</div>
+                    </div>
+                </div>
+
+                <div class="charts-section">
+                    <div class="chart-card">
+                        <h3>Invoice Amounts</h3>
+                        <canvas id="barChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Amount Distribution</h3>
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="invoices-section">
+                    <h2>Invoice Details</h2>
+                    <div id="invoicesList"></div>
+
+                    <div class="download-section" id="downloadSection" style="display: none;">
+                        <button class="btn btn-download" id="downloadBtn">Download Excel Report</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Batch Upload Tab -->
+        <div class="tab-content" id="batch-tab">
+            <div class="upload-section">
+                <div class="upload-area" id="batchUploadArea">
+                    <div class="upload-icon">📁</div>
+                    <h3>Drop multiple PDF files here</h3>
+                    <p>or click to browse - select multiple files</p>
+                    <input type="file" id="batchFileInput" accept=".pdf" multiple>
+                    <button class="btn" id="batchUploadBtn">Select PDF Files</button>
+                </div>
+
+                <div class="selected-files" id="selectedFiles" style="display: none;">
+                    <h4>Selected Files (<span id="fileCount">0</span>)</h4>
+                    <div id="selectedFilesList"></div>
+                    <div class="action-buttons">
+                        <button class="btn" id="startBatchBtn">Start Batch Processing</button>
+                        <button class="btn btn-secondary" id="clearFilesBtn">Clear All</button>
+                    </div>
+                </div>
+
+                <div class="loading" id="batchLoading">
+                    <div class="spinner"></div>
+                    <p>Uploading files and creating batch job...</p>
+                </div>
+
+                <div class="error-message" id="batchErrorMessage"></div>
+            </div>
+
+            <div class="batch-info" id="batchCreated" style="display: none;">
+                <h3>Batch Created Successfully!</h3>
+                <p>Batch ID: <strong id="createdBatchId"></strong></p>
+                <p>Files are being processed in the background with rate limiting.</p>
+                <p>Check the "Batch Status" tab to monitor progress.</p>
+            </div>
+        </div>
+
+        <!-- Batch Status Tab -->
+        <div class="tab-content" id="status-tab">
+            <div class="upload-section">
+                <h3 style="margin-bottom: 20px; color: #2c3e50;">Active Batches</h3>
+                <button class="btn" id="refreshBatchesBtn" style="margin-bottom: 20px;">Refresh Status</button>
+
+                <div id="batchesList">
+                    <p style="color: #7f8c8d; text-align: center;">No batches found. Upload some files first.</p>
+                </div>
+            </div>
+
+            <div class="results" id="batchResults">
+                <!-- Batch results will be shown here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Individual Job Dashboard Modal -->
+    <div class="modal-overlay" id="dashboardModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalFilename">filename.pdf</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Dashboard content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab + '-tab').classList.add('active');
+
+                // Refresh batches when switching to status tab
+                if (btn.dataset.tab === 'status') {
+                    loadBatches();
+                }
+            });
+        });
+
+        // ========================================
+        // Single Upload Functionality
+        // ========================================
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const errorMessage = document.getElementById('errorMessage');
+
+        let barChart = null;
+        let pieChart = null;
+
+        uploadBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.click();
+        });
+
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                handleFile(fileInput.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                showError('Please select a PDF file');
+                return;
+            }
+            uploadFile(file);
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('active');
+            setTimeout(() => {
+                errorMessage.classList.remove('active');
+            }, 5000);
+        }
+
+        async function uploadFile(file) {
+            loading.classList.add('active');
+            results.classList.remove('active');
+            errorMessage.classList.remove('active');
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || data.error || 'Upload failed');
+                }
+
+                displayResults(data);
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        function formatCurrency(value) {
+            return '$' + value.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+        }
+
+        function displayResults(data) {
+            results.classList.add('active');
+
+            document.getElementById('vendorName').textContent = data.vendor || 'Unknown';
+            document.getElementById('newTemplateBadge').style.display = data.template_created ? 'inline' : 'none';
+
+            document.getElementById('invoicesFound').textContent = data.invoices_found;
+            document.getElementById('totalAmount').textContent = formatCurrency(data.dashboard.total_amount);
+            document.getElementById('avgAmount').textContent = formatCurrency(data.dashboard.average_amount);
+            document.getElementById('highestAmount').textContent = formatCurrency(data.dashboard.highest_amount);
+
+            renderCharts(data);
+
+            const invoicesList = document.getElementById('invoicesList');
+            invoicesList.innerHTML = '';
+
+            data.invoices.forEach((invoice, index) => {
+                const card = createInvoiceCard(invoice, index + 1);
+                invoicesList.appendChild(card);
+            });
+
+            if (data.excel_file) {
+                document.getElementById('downloadSection').style.display = 'block';
+                document.getElementById('downloadBtn').onclick = () => {
+                    window.location.href = '/download/' + data.excel_file;
+                };
+            }
+        }
+
+        function renderCharts(data) {
+            const amounts = data.dashboard.amounts;
+            const labels = amounts.map((_, i) => 'Invoice ' + (i + 1));
+
+            if (barChart) barChart.destroy();
+            if (pieChart) pieChart.destroy();
+
+            const barCtx = document.getElementById('barChart').getContext('2d');
+            barChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Amount',
+                        data: amounts,
+                        backgroundColor: '#3498db',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => '$' + value.toLocaleString()
+                            }
+                        }
+                    }
+                }
+            });
+
+            const pieCtx = document.getElementById('pieChart').getContext('2d');
+            const colors = ['#3498db', '#2ecc71', '#f1c40f', '#e74c3c', '#9b59b6', '#1abc9c', '#e67e22', '#34495e'];
+            pieChart = new Chart(pieCtx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: amounts,
+                        backgroundColor: colors.slice(0, amounts.length)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        }
+
+        function createInvoiceCard(invoice, number, sourceFile = null) {
+            const card = document.createElement('div');
+            card.className = 'invoice-card ' + (invoice.is_valid ? 'valid' : 'invalid');
+
+            const data = invoice.data;
+            const invoiceNum = data.invoice_number || data.invoice_no || 'N/A';
+
+            let detailsHtml = '<div class="invoice-details">';
+            if (sourceFile) {
+                detailsHtml += `
+                    <div class="detail-item">
+                        <label>Source File</label>
+                        <span>${sourceFile}</span>
+                    </div>
+                `;
+            }
+            for (const [key, value] of Object.entries(data)) {
+                if (value && key !== 'line_items' && key !== 'discounts' && key !== 'page_numbers') {
+                    const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    detailsHtml += `
+                        <div class="detail-item">
+                            <label>${label}</label>
+                            <span>${value}</span>
+                        </div>
+                    `;
+                }
+            }
+            detailsHtml += '</div>';
+
+            let lineItemsHtml = '';
+            if (invoice.line_items && invoice.line_items.length > 0) {
+                lineItemsHtml = `
+                    <div class="line-items">
+                        <h5>Line Items</h5>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th>Qty</th>
+                                    <th>Rate</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${invoice.line_items.map(item => `
+                                    <tr>
+                                        <td>${item.description || 'N/A'}</td>
+                                        <td>${item.quantity || item.qty || '1'}</td>
+                                        <td>${item.rate || item.unit_price || 'N/A'}</td>
+                                        <td>${item.line_total || item.total || item.amount || 'N/A'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            card.innerHTML = `
+                <div class="invoice-header">
+                    <h4>Invoice #${number}: ${invoiceNum}</h4>
+                    <span class="badge ${invoice.is_valid ? 'valid' : 'invalid'}">
+                        ${invoice.is_valid ? 'Valid' : 'Issues Found'}
+                    </span>
+                </div>
+                ${detailsHtml}
+                ${lineItemsHtml}
+            `;
+
+            return card;
+        }
+
+        // ========================================
+        // Batch Upload Functionality
+        // ========================================
+        const batchUploadArea = document.getElementById('batchUploadArea');
+        const batchFileInput = document.getElementById('batchFileInput');
+        const batchUploadBtn = document.getElementById('batchUploadBtn');
+        const selectedFiles = document.getElementById('selectedFiles');
+        const selectedFilesList = document.getElementById('selectedFilesList');
+        const fileCount = document.getElementById('fileCount');
+        const startBatchBtn = document.getElementById('startBatchBtn');
+        const clearFilesBtn = document.getElementById('clearFilesBtn');
+        const batchLoading = document.getElementById('batchLoading');
+        const batchErrorMessage = document.getElementById('batchErrorMessage');
+        const batchCreated = document.getElementById('batchCreated');
+
+        let selectedPDFFiles = [];
+
+        batchUploadBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            batchFileInput.click();
+        });
+
+        batchUploadArea.addEventListener('click', () => {
+            batchFileInput.click();
+        });
+
+        batchUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            batchUploadArea.classList.add('dragover');
+        });
+
+        batchUploadArea.addEventListener('dragleave', () => {
+            batchUploadArea.classList.remove('dragover');
+        });
+
+        batchUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            batchUploadArea.classList.remove('dragover');
+            addFilesToBatch(e.dataTransfer.files);
+        });
+
+        batchFileInput.addEventListener('change', () => {
+            addFilesToBatch(batchFileInput.files);
+            batchFileInput.value = ''; // Reset so same files can be selected again
+        });
+
+        function addFilesToBatch(files) {
+            for (const file of files) {
+                if (file.name.toLowerCase().endsWith('.pdf')) {
+                    // Check for duplicates
+                    if (!selectedPDFFiles.some(f => f.name === file.name)) {
+                        selectedPDFFiles.push(file);
+                    }
+                }
+            }
+            updateFilesList();
+        }
+
+        function updateFilesList() {
+            if (selectedPDFFiles.length === 0) {
+                selectedFiles.style.display = 'none';
+                return;
+            }
+
+            selectedFiles.style.display = 'block';
+            fileCount.textContent = selectedPDFFiles.length;
+
+            selectedFilesList.innerHTML = selectedPDFFiles.map((file, index) => `
+                <div class="selected-file">
+                    <span>📄 ${file.name}</span>
+                    <button class="remove-btn" onclick="removeFile(${index})">x</button>
+                </div>
+            `).join('');
+        }
+
+        window.removeFile = function(index) {
+            selectedPDFFiles.splice(index, 1);
+            updateFilesList();
+        };
+
+        clearFilesBtn.addEventListener('click', () => {
+            selectedPDFFiles = [];
+            updateFilesList();
+        });
+
+        startBatchBtn.addEventListener('click', async () => {
+            if (selectedPDFFiles.length === 0) {
+                showBatchError('No files selected');
+                return;
+            }
+
+            batchLoading.classList.add('active');
+            batchCreated.style.display = 'none';
+            batchErrorMessage.classList.remove('active');
+
+            const formData = new FormData();
+            selectedPDFFiles.forEach(file => {
+                formData.append('files', file);
+            });
+
+            try {
+                const response = await fetch('/batch/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Batch upload failed');
+                }
+
+                // Show success message
+                batchCreated.style.display = 'block';
+                document.getElementById('createdBatchId').textContent = data.batch_id;
+
+                // Clear selected files
+                selectedPDFFiles = [];
+                updateFilesList();
+
+            } catch (error) {
+                showBatchError(error.message);
+            } finally {
+                batchLoading.classList.remove('active');
+            }
+        });
+
+        function showBatchError(message) {
+            batchErrorMessage.textContent = message;
+            batchErrorMessage.classList.add('active');
+            setTimeout(() => {
+                batchErrorMessage.classList.remove('active');
+            }, 5000);
+        }
+
+        // ========================================
+        // Batch Status Functionality
+        // ========================================
+        const batchesList = document.getElementById('batchesList');
+        const batchResults = document.getElementById('batchResults');
+        const refreshBatchesBtn = document.getElementById('refreshBatchesBtn');
+
+        refreshBatchesBtn.addEventListener('click', loadBatches);
+
+        async function loadBatches() {
+            try {
+                const response = await fetch('/batches');
+                const data = await response.json();
+
+                if (data.batches.length === 0) {
+                    batchesList.innerHTML = '<p style="color: #7f8c8d; text-align: center;">No batches found. Upload some files first.</p>';
+                    return;
+                }
+
+                batchesList.innerHTML = data.batches.map(batch => `
+                    <div class="batch-info" style="margin-bottom: 15px; background: ${getBatchColor(batch.status)};">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h3 style="margin: 0;">Batch: ${batch.batch_id}</h3>
+                            <span class="badge ${batch.status}">${batch.status.toUpperCase()}</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="fill" style="width: ${batch.progress}%;"></div>
+                        </div>
+                        <div class="batch-stats">
+                            <span class="batch-stat">Total: <strong>${batch.total_jobs}</strong></span>
+                            <span class="batch-stat">Completed: <strong>${batch.completed_jobs}</strong></span>
+                            <span class="batch-stat">Success: <strong>${batch.successful_jobs}</strong></span>
+                            <span class="batch-stat">Failed: <strong>${batch.failed_jobs}</strong></span>
+                        </div>
+                        <div class="file-list">
+                            ${batch.jobs.map(job => `
+                                <div class="file-item">
+                                    <span class="filename">${job.filename}</span>
+                                    <span class="status badge ${job.status}">${job.status}</span>
+                                    <div class="file-actions">
+                                        ${job.status === 'completed' ? `
+                                            <button class="btn btn-view" onclick="viewJobDashboard('${job.job_id}', '${job.filename}')">View Dashboard</button>
+                                        ` : ''}
+                                        ${job.excel_path ? `<a href="/download/${job.excel_path}" class="btn btn-download" style="padding: 5px 12px; margin: 0;">Download</a>` : ''}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        ${batch.status === 'completed' ? `
+                            <button class="btn" onclick="viewBatchResults('${batch.batch_id}')" style="margin-top: 10px;">
+                                View Aggregated Results
+                            </button>
+                        ` : ''}
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error loading batches:', error);
+                batchesList.innerHTML = '<p style="color: #e74c3c;">Error loading batches. Please try again.</p>';
+            }
+        }
+
+        function getBatchColor(status) {
+            switch (status) {
+                case 'completed': return '#e8f6f3';
+                case 'processing': return '#d6eaf8';
+                case 'pending': return '#fdebd0';
+                case 'failed': return '#fadbd8';
+                default: return '#f5f5f5';
+            }
+        }
+
+        window.viewBatchResults = async function(batchId) {
+            try {
+                const response = await fetch(`/batch/${batchId}/results`);
+                const data = await response.json();
+
+                batchResults.classList.add('active');
+                batchResults.innerHTML = `
+                    <div class="vendor-info">
+                        <span>Vendors:</span>
+                        <strong>${data.vendors.join(', ') || 'Unknown'}</strong>
+                    </div>
+
+                    <div class="dashboard">
+                        <div class="stat-card info">
+                            <h4>Total Invoices</h4>
+                            <div class="value">${data.dashboard.total_invoices}</div>
+                        </div>
+                        <div class="stat-card success">
+                            <h4>Total Amount</h4>
+                            <div class="value">${formatCurrency(data.dashboard.total_amount)}</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Average Amount</h4>
+                            <div class="value">${formatCurrency(data.dashboard.average_amount)}</div>
+                        </div>
+                        <div class="stat-card warning">
+                            <h4>Highest Invoice</h4>
+                            <div class="value">${formatCurrency(data.dashboard.highest_amount)}</div>
+                        </div>
+                    </div>
+
+                    <div class="invoices-section">
+                        <h2>All Invoices from Batch</h2>
+                        <div id="batchInvoicesList"></div>
+                    </div>
+                `;
+
+                const invoicesList = document.getElementById('batchInvoicesList');
+                data.invoices.forEach((invoice, index) => {
+                    const card = createInvoiceCard(invoice, index + 1, invoice.source_file);
+                    invoicesList.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error('Error loading batch results:', error);
+            }
+        };
+
+        // Auto-refresh batches while on status tab
+        let refreshInterval = null;
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.dataset.tab === 'status') {
+                    refreshInterval = setInterval(loadBatches, 3000); // Refresh every 3 seconds
+                } else if (refreshInterval) {
+                    clearInterval(refreshInterval);
+                    refreshInterval = null;
+                }
+            });
+        });
+
+        // ========================================
+        // Modal Dashboard Functionality
+        // ========================================
+        const dashboardModal = document.getElementById('dashboardModal');
+        const modalFilename = document.getElementById('modalFilename');
+        const modalBody = document.getElementById('modalBody');
+
+        let modalBarChart = null;
+        let modalPieChart = null;
+
+        // View individual job dashboard
+        window.viewJobDashboard = async function(jobId, filename) {
+            try {
+                modalFilename.textContent = filename;
+                modalBody.innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <div class="spinner"></div>
+                        <p>Loading dashboard...</p>
+                    </div>
+                `;
+                dashboardModal.classList.add('active');
+
+                const response = await fetch(`/job/${jobId}/results`);
+                if (!response.ok) {
+                    throw new Error('Failed to load job results');
+                }
+                const data = await response.json();
+
+                renderModalDashboard(data);
+
+            } catch (error) {
+                console.error('Error loading job dashboard:', error);
+                modalBody.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #e74c3c;">
+                        <p>Error loading dashboard: ${error.message}</p>
+                        <button class="btn" onclick="closeModal()">Close</button>
+                    </div>
+                `;
+            }
+        };
+
+        function renderModalDashboard(data) {
+            modalBody.innerHTML = `
+                <div class="vendor-info">
+                    <span>Vendor:</span>
+                    <strong>${data.vendor || 'Unknown'}</strong>
+                    ${data.template_created ? '<span class="new-template-badge">New Template Created</span>' : ''}
+                </div>
+
+                <div class="dashboard">
+                    <div class="stat-card info">
+                        <h4>Invoices Found</h4>
+                        <div class="value">${data.invoices_found}</div>
+                    </div>
+                    <div class="stat-card success">
+                        <h4>Total Amount</h4>
+                        <div class="value">${formatCurrency(data.dashboard.total_amount)}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Average Amount</h4>
+                        <div class="value">${formatCurrency(data.dashboard.average_amount)}</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <h4>Highest Invoice</h4>
+                        <div class="value">${formatCurrency(data.dashboard.highest_amount)}</div>
+                    </div>
+                </div>
+
+                <div class="modal-charts-section">
+                    <div class="modal-chart-card">
+                        <h3>Invoice Amounts</h3>
+                        <canvas id="modalBarChart"></canvas>
+                    </div>
+                    <div class="modal-chart-card">
+                        <h3>Amount Distribution</h3>
+                        <canvas id="modalPieChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="invoices-section" style="background: white; margin-bottom: 0;">
+                    <h2>Invoice Details</h2>
+                    <div id="modalInvoicesList"></div>
+                </div>
+
+                ${data.excel_file ? `
+                    <div class="modal-download-section">
+                        <a href="/download/${data.excel_file}" class="btn btn-download">Download Excel Report</a>
+                    </div>
+                ` : ''}
+            `;
+
+            // Render charts
+            renderModalCharts(data);
+
+            // Render invoice cards
+            const invoicesList = document.getElementById('modalInvoicesList');
+            data.invoices.forEach((invoice, index) => {
+                const card = createInvoiceCard(invoice, index + 1);
+                invoicesList.appendChild(card);
+            });
+        }
+
+        function renderModalCharts(data) {
+            const amounts = data.dashboard.amounts;
+            const labels = amounts.map((_, i) => 'Invoice ' + (i + 1));
+            const colors = ['#3498db', '#2ecc71', '#f1c40f', '#e74c3c', '#9b59b6', '#1abc9c', '#e67e22', '#34495e'];
+
+            // Destroy existing modal charts if any
+            if (modalBarChart) modalBarChart.destroy();
+            if (modalPieChart) modalPieChart.destroy();
+
+            // Bar chart
+            const barCtx = document.getElementById('modalBarChart').getContext('2d');
+            modalBarChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Amount',
+                        data: amounts,
+                        backgroundColor: '#3498db',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => '$' + value.toLocaleString()
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Pie chart
+            const pieCtx = document.getElementById('modalPieChart').getContext('2d');
+            modalPieChart = new Chart(pieCtx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: amounts,
+                        backgroundColor: colors.slice(0, amounts.length)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        }
+
+        function closeModal() {
+            dashboardModal.classList.remove('active');
+            // Destroy charts to prevent memory leaks
+            if (modalBarChart) {
+                modalBarChart.destroy();
+                modalBarChart = null;
+            }
+            if (modalPieChart) {
+                modalPieChart.destroy();
+                modalPieChart = null;
+            }
+        }
+
+        // Close modal when clicking outside
+        dashboardModal.addEventListener('click', (e) => {
+            if (e.target === dashboardModal) {
+                closeModal();
+            }
+        });
+
+        // Close modal with ESC key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && dashboardModal.classList.contains('active')) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
