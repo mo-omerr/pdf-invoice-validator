@@ -39,8 +39,6 @@ processed/
 htmlcov/
 
 
-*.pdf
-*.xlsx
 
 
 __pycache__/
