@@ -41,3 +41,22 @@ htmlcov/
 
 *.pdf
 *.xlsx
+
+
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Environment variables
+.env
+
+# IDE
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
